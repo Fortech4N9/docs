@@ -1,0 +1,54 @@
+# docker-compose.yml — local production-style and dev variants of the docs.
+#
+# Production (single command):
+#   docker compose up -d docs
+#   open http://localhost:8088
+#
+# Development with hot reload:
+#   docker compose --profile dev up docs-dev
+#   open http://localhost:5173
+
+services:
+  # ────────────────── Production: built static + nginx ──────────────────
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: diploma-docs:latest
+    container_name: diploma-docs
+    restart: unless-stopped
+    ports:
+      - "${DOCS_PORT:-8088}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - diplom-net
+
+  # ────────────────── Dev: vitepress dev w/ hot reload ──────────────────
+  # Запускается только с профилем `dev`, чтобы не мешать обычному `up`.
+  docs-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: diploma-docs-dev:latest
+    container_name: diploma-docs-dev
+    restart: "no"
+    ports:
+      - "${DOCS_DEV_PORT:-5173}:5173"
+    volumes:
+      # Hot reload: правки .md мгновенно подхватываются Vite-сервером.
+      - ./docs:/app/docs
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    networks:
+      - diplom-net
+
+networks:
+  diplom-net:
+    name: ${COMPOSE_NETWORK_NAME:-diploma-docs-net}
+    driver: bridge

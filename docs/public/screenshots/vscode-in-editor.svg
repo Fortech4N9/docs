@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520" role="img" aria-labelledby="t">
+  <title id="t">>:0?: VS Code  ?>4A25B:0 ?0BB5@=>2 8 Problems</title>
+  <rect width="920" height="520" fill="#1e1e1e"/>
+  <rect x="0" y="0" width="920" height="36" fill="#323233"/>
+  <text x="12" y="24" fill="#ccc" font-family="system-ui,sans-serif" font-size="12">main.c  VS Code</text>
+  <rect x="0" y="36" width="640" height="360" fill="#1e1e1e"/>
+  <text x="24" y="72" fill="#569cd6" font-family="Consolas,monospace" font-size="14">void </text>
+  <text x="72" y="72" fill="#dcdcaa" font-family="Consolas,monospace" font-size="14">sum</text>
+  <text x="108" y="72" fill="#d4d4d4" font-family="Consolas,monospace" font-size="14">(&) {</text>
+  <rect x="16" y="88" width="600" height="22" fill="#264f7840"/>
+  <text x="40" y="104" fill="#ce9178" font-family="Consolas,monospace" font-size="14">  for (int i = 0; i &lt; n; i++) acc += arr[i];</text>
+  <text x="420" y="104" fill="#888" font-family="system-ui,sans-serif" font-size="11"> unit_stride</text>
+  <rect x="16" y="118" width="600" height="22" fill="#5a1d1d55"/>
+  <text x="40" y="134" fill="#ce9178" font-family="Consolas,monospace" font-size="14">  acc += ptr[get_idx(i)];</text>
+  <text x="380" y="134" fill="#888" font-family="system-ui,sans-serif" font-size="11"> gather_scatter</text>
+  <text x="24" y="172" fill="#6a9955" font-family="Consolas,monospace" font-size="13">// Hover: tooltip A B8?>< ?0BB5@=0 8 AAK;:>9 Run remote analysis</text>
+  <rect x="0" y="396" width="920" height="124" fill="#252526"/>
+  <rect x="0" y="396" width="920" height="28" fill="#2d2d2d"/>
+  <text x="12" y="415" fill="#ccc" font-family="system-ui,sans-serif" font-size="11">Problems</text>
+  <text x="90" y="415" fill="#888" font-family="system-ui,sans-serif" font-size="11">Output</text>
+  <text x="160" y="415" fill="#888" font-family="system-ui,sans-serif" font-size="11">Debug Console</text>
+  <text x="24" y="448" fill="#f97316" font-family="system-ui,sans-serif" font-size="12">� cache-analyzer</text>
+  <text x="140" y="448" fill="#d4d4d4" font-family="Consolas,monospace" font-size="12">gather_scatter: =5@02=><5@=K9 4>ABC? &</text>
+  <text x="24" y="478" fill="#eab308" font-family="system-ui,sans-serif" font-size="12">� cache-analyzer</text>
+  <text x="140" y="478" fill="#d4d4d4" font-family="Consolas,monospace" font-size="12">non_unit_stride: H03 =5 @025= sizeof &</text>
+  <text x="16" y="510" fill="#6b7280" font-family="system-ui,sans-serif" font-size="10">;;NAB@0B82=K9 <>:0?: DecorationManager + DiagnosticCollection.</text>
+</svg>

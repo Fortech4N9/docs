@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="t">
+  <title id="t">>:0?: AB@0=8F0 ?@>5:B0  D09;K 8 <5B@8:8</title>
+  <rect width="920" height="480" fill="#0f172a" rx="12"/>
+  <rect x="0" y="0" width="920" height="56" fill="#1e293b"/>
+  <text x="24" y="36" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="15" font-weight="600">@>5:B: MyProject</text>
+  <rect x="24" y="76" width="360" height="380" fill="#1e293b" stroke="#334155" rx="8"/>
+  <text x="40" y="108" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">$09;K</text>
+  <rect x="40" y="124" width="328" height="36" fill="#14532d" rx="4"/>
+  <text x="52" y="147" fill="#bbf7d0" font-family="monospace" font-size="13">main.c</text>
+  <text x="280" y="147" fill="#86efac" font-family="system-ui,sans-serif" font-size="11">done</text>
+  <rect x="40" y="172" width="328" height="36" fill="#422006" rx="4"/>
+  <text x="52" y="195" fill="#fde68a" font-family="monospace" font-size="13">utils.c</text>
+  <text x="240" y="195" fill="#fcd34d" font-family="system-ui,sans-serif" font-size="11">static_running</text>
+  <rect x="40" y="230" width="140" height="32" fill="#2563eb" rx="6"/>
+  <text x="62" y="250" fill="#fff" font-family="system-ui,sans-serif" font-size="12">� 03@C78BL .c</text>
+  <rect x="408" y="76" width="488" height="380" fill="#1e293b" stroke="#334155" rx="8"/>
+  <text x="428" y="108" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">Pipeline</text>
+  <text x="428" y="140" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="13">�  �  �  �  pending � static � cache � done</text>
+  <text x="428" y="186" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="12">5B@8:8</text>
+  <circle cx="540" cy="280" r="72" fill="#1e3a5f" stroke="#3b82f6" stroke-width="8"/>
+  <text x="508" y="288" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="18" font-weight="600">99.7%</text>
+  <text x="660" y="260" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">Hit rate</text>
+  <text x="660" y="288" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">Cache misses (L1): 12/345</text>
+  <text x="660" y="316" fill="#cbd5e1" font-family="system-ui,sans-serif" font-size="13">Optimization score: 99.7</text>
+  <text x="24" y="468" fill="#64748b" font-family="system-ui,sans-serif" font-size="11">;;NAB@0B82=K9 <>:0?: ProjectPage + pipeline + doughnut.</text>
+</svg>
