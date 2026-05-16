@@ -2,7 +2,7 @@
 
 Эта страница соединяет два сценария — local-analysis и remote-analysis — в одной картине.
 
-## Local analysis (на каждое сохранение)
+## Local analysis (при правках .c с debounce)
 
 ```mermaid
 sequenceDiagram
@@ -51,7 +51,9 @@ sequenceDiagram
       API->>API: SecretStorage сохраняет analyzer_token
     end
 
-    EXT->>API: uploadCurrentFile(...)
+    EXT->>API: resolveCacheSimulatorId<br/>(globalState analyzer_cache_config_id<br/>или quick pick → POST cache-configs)
+    EXT->>API: submitAnalysis (multipart:<br/>project_id + cache_config_id + file)
+
     API->>ANA: POST /analysis/upload
     ANA-->>API: 202 + задача
     Note over Pipe: static + cache workers, см. [event-flow](/architecture/event-flow)
@@ -76,7 +78,7 @@ sequenceDiagram
     participant API as ApiClient
     participant ANA as analysis-api
 
-    EXT->>API: uploadCurrentFile(...)
+    EXT->>API: resolveCacheSimulatorId + submitAnalysis(...)
     alt 401 истекла сессия
       API->>EXT: ошибка авторизации / logout
       EXT->>U: предложение запустить анализ заново
@@ -99,6 +101,13 @@ sequenceDiagram
 
 ## Состояние status bar
 
+В реализации **две соседних записи**:
+
+1. **Анализатор** — авторизация, команда запускает `analyzer.runAnalysis` (как раньше).
+2. **Симулятор** — активный UUID конфига (первые 8 символов) или предупреждение «не выбран», команда `analyzer.selectCacheSimulatorConfig`.
+
+`refreshStatusBars()` обновляет обе строки после логина, загрузки JSON-конфига, logout и когда Tree-sitter готов к локальному анализу.
+
 ```mermaid
 stateDiagram-v2
     [*] --> Loading: extension activate
@@ -113,11 +122,12 @@ stateDiagram-v2
     Anonymous --> [*]
 ```
 
-Текст в статусбаре по реализации:
+Текст второй строки по реализации:
 
-- после инициализации Tree-sitter: `Анализатор (TS готов)`;
-- при входе на платформу: `Анализатор: email@…`;
-- до входа — `Анализатор`; прогресс серверного запроса показывает **глобальный progress** VS Code со статусом задачи на русском.
+- сохранённый конфиг: `$(library) симулятор: <id>…` с подсказкой по полному uuid;
+- нет сохранённого: `$(warning) симулятор: не выбран`;
+
+Прогресс серверного запроса по-прежнему показывается **глобальным** progress-уведомлением VS Code со статусом задачи на русском.
 
 ## Жизнь decorations при смене editor
 

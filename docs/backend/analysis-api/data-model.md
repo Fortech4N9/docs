@@ -1,6 +1,6 @@
 # Модель данных — Analysis API
 
-В `analysis_db` живут две таблицы: `files` и `analysis_tasks`. Они покрывают только OLTP-часть. OLAP-метрики — в [ClickHouse](/infrastructure/clickhouse).
+В `analysis_db` живут таблицы `files`, `analysis_tasks` и **`cache_simulator_configs`**. Они покрывают OLTP-часть. OLAP-метрики — в [ClickHouse](/infrastructure/clickhouse).
 
 ## ER-диаграмма
 
@@ -15,6 +15,18 @@ erDiagram
       text s3_path "<bucket>/<project>/<file_id>.c"
       varchar(64) content_hash "sha256(content) — для дедупликации"
       bigint size_bytes
+      varchar owner_user_id "JWT user_id — ставится при upload"
+      timestamp deleted_at "NULL — файл видим в файловом менеджере"
+      timestamp created_at
+    }
+
+    CACHE_SIMULATOR_CONFIGS {
+      varchar(36) id PK
+      varchar(36) user_id "JWT user_id"
+      varchar(255) display_name
+      varchar(255) original_filename
+      text s3_path "source-codes/cache-configs/…"
+      bigint size_bytes
       timestamp created_at
     }
 
@@ -23,6 +35,8 @@ erDiagram
       varchar(36) file_id FK
       varchar(50) status "pending|static_running|static_done|cache_running|done|error"
       varchar(50) type "default 'full_analysis'"
+      varchar(36) cache_config_id "FK logical to cache_simulator_configs"
+      text cache_config_s3_path "snapshot for Kafka start_cache"
       timestamp created_at
       timestamp updated_at
     }
@@ -38,6 +52,8 @@ CREATE TABLE IF NOT EXISTS files (
     s3_path      TEXT NOT NULL,
     content_hash VARCHAR(64) NOT NULL DEFAULT '',
     size_bytes   BIGINT NOT NULL DEFAULT 0,
+    owner_user_id VARCHAR(36) NOT NULL DEFAULT '',
+    deleted_at TIMESTAMP NULL,
     created_at   TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -57,7 +73,14 @@ CREATE TABLE IF NOT EXISTS analysis_tasks (
 
 CREATE INDEX IF NOT EXISTS idx_tasks_file_id ON analysis_tasks(file_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON analysis_tasks(status);
+
+-- см. также runMigrations в analysis-api/cmd/api/main.go — актуальный DDL:
+-- таблица cache_simulator_configs, столбцы analysis_tasks.cache_config_id / cache_config_s3_path, ...
 ```
+
+::: info Полный DDL
+Источник правды для старта контейнеров analysis-api — `runMigrations` в **`analysis-api/cmd/api/main.go`** (ALTER-ы добавляют конфиг симулятора, артефакты, ошибки задачи и т.д.).
+:::
 
 ::: info Индекс по `status`
 Запрос `GET /admin/system-status` агрегирует `count(*) FILTER (WHERE status = 'done')` и т.д. Без индекса по `status` Postgres делает full scan; с индексом — bitmap scan на меньшем диапазоне.
@@ -78,12 +101,14 @@ type File struct {
 }
 
 type AnalysisTask struct {
-    ID        string    `db:"id" json:"id"`
-    FileID    string    `db:"file_id" json:"file_id"`
-    Status    string    `db:"status" json:"status"`
-    Type      string    `db:"type" json:"type"`
-    CreatedAt time.Time `db:"created_at" json:"created_at"`
-    UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+    ID                 string    `db:"id" json:"id"`
+    FileID             string    `db:"file_id" json:"file_id"`
+    Status             string    `db:"status" json:"status"`
+    Type               string    `db:"type" json:"type"`
+    CacheConfigID      string    `db:"cache_config_id" json:"cache_config_id"`
+    CacheConfigS3Path  string    `db:"cache_config_s3_path" json:"cache_config_s3_path"`
+    CreatedAt          time.Time `db:"created_at" json:"created_at"`
+    UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 }
 
 const (

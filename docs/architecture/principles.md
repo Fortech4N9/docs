@@ -128,7 +128,10 @@ func getEnv(key, fallback string) string {
 Оба клиента используют один и тот же набор endpoint-ов через single base URL:
 
 - Frontend: `axios.create({ baseURL: '/api/v1' })` с прокси на nginx.
-- VS Code: `analyzer.apiUrl = http://localhost:80/api/v1` (настраивается).
+- VS Code: `analyzer.apiUrl` из настроек расширения (в репозитории дефолт `http://localhost:8080/api/v1`; выровняйте под порт nginx из `infra/.env`).
+
+
+Удалённые вызовы (`POST /analysis/upload`, `POST /analysis/files/:id/analyze`) **обязаны передавать** `cache_config_id` из каталога `GET/POST /analysis/cache-configs` — как в Sandbox (`CacheSimulatorConfigToolbar`), так и во VS Code-командах симулятора.
 
 ::: tip Почему две версии UI вместо WebView внутри VS Code
 - WebView — это "браузер в браузере", тяжелее по памяти и хуже интегрируется с лентой Diagnostic/CodeLens.
@@ -140,8 +143,8 @@ func getEnv(key, fallback string) string {
 
 VS Code имеет **два режима** анализа:
 
-- **Локальный (`web-tree-sitter`)** — мгновенный feedback (~50ms на средний файл) на каждое сохранение/правку.
-- **Удалённый (полный пайплайн через analysis-api)** — даёт точные cachegrind-метрики, занимает секунды.
+- **Локальный (`web-tree-sitter`)** — быстрый feedback при правках (debounced ≈ 800 ms во встроенном расширении).
+- **Удалённый (полный пайплайн через analysis-api)** — multipart с файлом и **`cache_config_id`**, затем секунды ожидания воркеров.
 
 ::: tip Почему именно tree-sitter, а не RegExp/clang
 - RegExp не отличит `arr[i]` внутри `for` от такого же подвыражения в комментарии или в `if (false)` — без AST это статистически шумно.

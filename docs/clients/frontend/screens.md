@@ -70,6 +70,7 @@
 ```
 
 - `pages/ProjectPage.vue`.
+- Перед загрузкой `.c` пользователь выбирает **`CacheSimulatorConfig`** (виджет `widgets/CacheSimulatorConfigToolbar.vue`): без `cache_config_id` бэкенд не примет `POST /analysis/upload`.
 - Список задач — `useAnalysisStore.fetchProjectTasks`.
 - При выборе задачи — `useAnalysisPolling(taskId)` до `done|error`; в UI показываются **`error_message`** и **`reused_from_task_id`** когда приходят с API.
 - **Метрики и паттерны** — после завершения: `fetchTaskMetrics` + `fetchTaskAggregated`; при пустом `/aggregated` делается `fetchTaskStaticPatterns` (то же правило у Sandbox и VS Code клиента).
@@ -78,6 +79,7 @@
 
 | Компонент | Назначение |
 |---|---|
+| `widgets/CacheSimulatorConfigToolbar.vue` | Список/загрузка/удаление конфигов симулятора; выбранный id уходит в `cache_config_id` при upload/analyze. |
 | `widgets/AnalysisPipelineStatus.vue` | Шаги пайплайна, русские подписи статусов (`STATUS_LABELS`), reuse, кнопка «Подробнее». |
 | `widgets/MetricsPanel.vue` | Модальное окно «Результаты анализа» с `widgets/ExtendedResultsPanel.vue`: карточки L1, фильтры по типу/уровню кэша, таблица, экспорт JSON, баннер ошибки воркера. |
 
@@ -113,12 +115,18 @@
 - Блок «Самые частые паттерны»: **горизонтальный Bar + Doughnut** (vue-chartjs), подписи тултипов с человекочитаемым именем паттерна (`patternLabel`).
 - Полный список `pattern_type` с цветными бэйджами качества.
 
-## Sandbox (внутренняя)
+## Sandbox (`/sandbox`)
 
-`/sandbox` — интерактив с реальным API: редактор декораций, пайплайн, hover с паттернами (на русском), toast по завершении анализа.
+Инструмент после входа (**`requiresAuth`**), реализация — `pages/SandboxPage.vue`.
 
-::: warning Доступ
-Перед публичным deploy стоит убрать маршрут из `router` или скрыть за проверкой окружения.
+- **Проект** выбирается из списка `GET /projects` (никакого фиксированного проекта «Sandbox»); последний выбор — `localStorage` (`sandbox_selected_project_id`).
+- **Файлы** в левой колонке — `GET /analysis/projects/:project_id/files`; отображаются только записи без мягкого удаления (`deleted_at IS NULL`).
+- **Скрыть из списка** — для каждой строки есть кнопка с корзиной → `DELETE /analysis/files/:file_id`; объект MinIO сохранён, файл исчезает из сайдбара; пользователь может «вернуть» запись тем же содержимым через повторную загрузку с тем же `sha256` (сервер восстанавливает строку, см. [Analysis API — файлы](/backend/analysis-api/api)).
+- **Конфиг симулятора** — обязателен перед `Анализировать` (виджеты `widgets/CacheSimulatorConfigToolbar.vue` + `widgets/CacheConfigGateModal.vue` при попытке запуска без `cache_config_id`).
+- Monaco, декорации, `ExtendedResultsPanel` — см. блоки результатов ниже по страницам документации.
+
+::: tip Отличие от `/projects/:id`
+Песочница не привязана к одному `project_id` в коде — пользователь явно переключает проект и работает с файлами внутри него.
 :::
 
 ## Header & Layout

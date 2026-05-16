@@ -43,16 +43,21 @@ flowchart LR
 
 ## Что является входом и выходом
 
-**Вход** (Kafka payload — тот же `StartEvent`, что у static):
+**Вход** (Kafka payload для `start_cache`; совпадает по базовым полям с static, добавлен путь конфига пользователя):
 
 ```json
 {
   "task_id": "550e84...",
   "project_id": "11111-...",
   "file_s3_path": "source-codes/proj/file.c",
-  "cache_profile_hash": "..."
+  "cache_profile_hash": "...",
+  "cache_config_s3_path": "source-codes/cache-configs/<user>/<id>.json"
 }
 ```
+
+::: tip Конфиг пользователя
+`cache_config_s3_path` — объект в MinIO, загруженный через **`POST /api/v1/analysis/cache-configs`**. Текущий воркер **не подставляет** его в командную строку симулятора: значение есть в модели события и пишется в лог `[usecase]`, чтобы следующий слой мог скачать файл перед вызовом `INTERPRETER_BINARY`.
+:::
 
 **Выходы**:
 

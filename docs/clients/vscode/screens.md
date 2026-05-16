@@ -16,9 +16,14 @@
 | Действие пользователя | Что обновляется в UI |
 |---|---|
 | Правки документа (при `autoLocalAnalysis`) | Локальный tree-sitter → все providers |
-| **Анализатор: запустить анализ на сервере** | Серверный пайплайн → после polling: `ReportPanel.showServerReport(bundle)` и декорации из `mapAggregatedToEntries` |
+| Выбор / загрузка JSON-конфига симулятора | Обновление второй строки статус-бара («симулятор: …») |
+| **Анализатор: запустить анализ на сервере** | Если нет сохранённого `cache_config_id` — модальное ветвление к выбору конфига, затем серверный пайплайн; после polling — `ReportPanel.showServerReport(bundle)` и декорации из `mapAggregatedToEntries` |
 | **Анализатор: сбросить подсветку** | Сброс decorations, diagnostics, hover/codelens |
 | **Анализатор: показать отчёт** | Последний `AnalysisResultBundle` или локальные записи |
+
+## Status bar и конфиг симулятора
+
+Слева от кнопки «Анализатор» — второй элемент статус-бара: сокращённый UUID активного конфига или сообщение «симулятор: не выбран». По клику вызывается `analyzer.selectCacheSimulatorConfig`; без выбора JSON **`POST /analysis/upload`** недоступен (как ограничение Sandbox с `CacheSimulatorConfigToolbar`).
 
 ## Отчёт (webview)
 

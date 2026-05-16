@@ -15,34 +15,35 @@
 
 ## package.json — основные поля
 
+Истина — `vs-code/package.json`. Ниже сокращённый фрагмент (все ключи см. там же):
+
 ```json
 {
   "engines": { "vscode": "^1.85.0" },
-  "categories": ["Programming Languages", "Linters", "Visualization"],
   "activationEvents": ["onLanguage:c"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      { "command": "analyzer.login",          "title": "Analyzer: Login" },
-      { "command": "analyzer.logout",         "title": "Analyzer: Logout" },
-      { "command": "analyzer.runAnalysis",    "title": "Analyzer: Run Analysis" },
-      { "command": "analyzer.localAnalysis",  "title": "Analyzer: Run Local Analysis (Tree-sitter)" },
-      { "command": "analyzer.showReport",     "title": "Analyzer: Show Report Panel" },
-      { "command": "analyzer.clearDecorations", "title": "Analyzer: Clear Decorations" }
+      { "command": "analyzer.selectCacheSimulatorConfig", "title": "Анализатор: выбрать конфиг симулятора кэша" },
+      { "command": "analyzer.addCacheSimulatorConfig", "title": "Анализатор: добавить конфиг симулятора (JSON)…" },
+      { "command": "analyzer.newSampleCacheSimulatorConfig", "title": "Анализатор: создать пример конфига симулятора" },
+      { "command": "analyzer.forgetCacheSimulatorConfig", "title": "Анализатор: сбросить сохранённый конфиг симулятора" },
+      { "command": "analyzer.runAnalysis", "title": "Анализатор: запустить анализ на сервере" }
     ],
     "configuration": {
-      "title": "Cache & Memory Analyzer",
       "properties": {
-        "analyzer.apiUrl":              { "type": "string",  "default": "http://localhost:80/api/v1" },
-        "analyzer.pollingIntervalMs":   { "type": "number",  "default": 2500 },
-        "analyzer.autoLocalAnalysis":   { "type": "boolean", "default": true },
-        "analyzer.showInlineHints":     { "type": "boolean", "default": true },
-        "analyzer.severityThreshold":   { "type": "string",  "enum": ["info","warning","error"], "default": "warning" }
+        "analyzer.apiUrl": { "type": "string", "default": "http://localhost:8080/api/v1" },
+        "analyzer.pollingIntervalMs": { "type": "number", "default": 2500 },
+        "analyzer.autoLocalAnalysis": { "type": "boolean", "default": true },
+        "analyzer.showInlineHints": { "type": "boolean", "default": true },
+        "analyzer.severityThreshold": { "type": "string", "enum": ["info","warning","error"], "default": "info" }
       }
     }
   }
 }
 ```
+
+Также зарегистрированы `analyzer.login/logout/showReport/localAnalysis/clearDecorations` и палитра цветов `analyzer.*Background`.
 
 ::: info `activationEvents: onLanguage:c`
 Расширение активируется только при открытии `.c` файла. Без этого VS Code загружал бы extension host лишний раз для всех типов файлов.
@@ -94,21 +95,20 @@ await Parser.init({
 Сборка `tree-sitter-c` из исходников требует Emscripten, что усложняет CI. Готовый `.wasm` (~600KB) идёт в комплекте с расширением.
 :::
 
-## Хранение токена
+## Хранение токена и несекретных ID
 
 ```ts
-// src/api/client.ts
+// src/api/client.ts — упрощённо
 async loadToken(): Promise<void> {
     this.token = await this.context.secrets.get('analyzer_token')
     this.userEmail = this.context.globalState.get<string>('analyzer_email')
 }
 
-async saveToken(token: string, email: string): Promise<void> {
-    await this.context.secrets.store('analyzer_token', token)
-    await this.context.globalState.update('analyzer_email', email)
-}
+// globalState дополнительно держит:
+// analyzer_project_id, analyzer_cache_config_id (активный JSON симулятора)
 ```
 
+При **logout** токен и выбранный `analyzer_cache_config_id` сбрасываются, чтобы не смешивать конфиги разных JWT.
 ::: tip Почему `context.secrets`, а не `globalState`
 - `secrets` шифруется через системный keychain (macOS Keychain, Windows Credential Manager, libsecret на Linux).
 - Никаких токенов в plain-text-конфигах.
@@ -118,7 +118,7 @@ async saveToken(token: string, email: string): Promise<void> {
 ## Команды разработки
 
 ```bash
-# в каталоге diploma-vscode
+# в каталоге vs-code/
 npm install
 npm run watch          # webpack --watch
 # F5 в VS Code → "Run Extension" launches new VSC window

@@ -29,12 +29,12 @@ diploma-vscode/
 flowchart TB
     Activate[activate context] --> Init[ApiClient + DecorationMgr + DiagnosticsMgr<br/>+ HoverProvider + CodeLensProvider + StatusBar]
     Init --> LoadTok[apiClient.loadToken]
-    LoadTok --> InitTS[initTreeSitter]
+    LoadTok --> InitTS[initTree-sitter WASM]
     InitTS --> RegHover[registerHoverProvider]
     InitTS --> RegLens[registerCodeLensProvider]
-    InitTS --> RegCmd[registerCommand×6]
-    InitTS --> Watch[onDidChangeTextDocument<br/>+ onDidSaveTextDocument]
-    Watch --> Debounce[debounce 300ms]
+    InitTS --> RegCmd[registerCommand ×10<br/>remote + локальный + симулятор + отчёт]
+    InitTS --> Watch[onDidChangeTextDocument]
+    Watch --> Debounce[debounce 800ms]
     Debounce --> Local[runLocalAnalysis]
 ```
 
@@ -42,39 +42,51 @@ flowchart TB
 
 ```ts
 context.subscriptions.push(
-  vscode.commands.registerCommand('analyzer.login',           () => doLogin()),
-  vscode.commands.registerCommand('analyzer.logout',          () => doLogout()),
-  vscode.commands.registerCommand('analyzer.runAnalysis',     () => runRemoteAnalysis()),
-  vscode.commands.registerCommand('analyzer.localAnalysis',   () => runLocalAnalysis(activeEditor)),
-  vscode.commands.registerCommand('analyzer.showReport',      () => ReportPanel.createOrShow(...)),
-  vscode.commands.registerCommand('analyzer.clearDecorations',() => clearAll()),
+  vscode.commands.registerCommand('analyzer.login', …),
+  vscode.commands.registerCommand('analyzer.logout', …),
+  vscode.commands.registerCommand('analyzer.runAnalysis', …),
+  vscode.commands.registerCommand('analyzer.localAnalysis', …),
+  vscode.commands.registerCommand('analyzer.showReport', …),
+  vscode.commands.registerCommand('analyzer.clearDecorations', …),
+  vscode.commands.registerCommand('analyzer.selectCacheSimulatorConfig', …),
+  vscode.commands.registerCommand('analyzer.addCacheSimulatorConfig', …),
+  vscode.commands.registerCommand('analyzer.newSampleCacheSimulatorConfig', …),
+  vscode.commands.registerCommand('analyzer.forgetCacheSimulatorConfig', …),
 )
 ```
 
+## ApiClient и конфиг симулятора
+
+В `ApiClient` хранятся:
+
+| Ключ хранилища | Где |
+|---|---|
+| JWT | `secrets` → `analyzer_token` |
+| `analyzer_project_id` | `globalState` (проект «VS Code Analyzer» после `GET /projects`) |
+| `analyzer_cache_config_id` | `globalState` |
+
+Методы `listCacheSimulatorConfigs`, `uploadCacheSimulatorConfig` и поле multipart **`cache_config_id`** при `submitAnalysis` дублируют контракт веб-песочницы.
+
 ## Auto-local-analysis
 
-Когда `analyzer.autoLocalAnalysis === true` — расширение слушает изменения и сохранения документа:
+Когда `analyzer.autoLocalAnalysis === true` — расширение слушает изменения активного документа `.c`:
 
 ```ts
-vscode.workspace.onDidChangeTextDocument(({ document }) => {
-  if (document.languageId !== 'c') return
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    const editor = vscode.window.activeTextEditor
-    if (editor && editor.document === document) runLocalAnalysis(editor)
-  }, 300)
-})
-
-vscode.workspace.onDidSaveTextDocument((document) => {
-  if (document.languageId !== 'c') return
-  const editor = vscode.window.activeTextEditor
-  if (editor && editor.document === document) runLocalAnalysis(editor)
-})
+vscode.workspace.onDidChangeTextDocument((e) => {
+  if (e.document.languageId !== 'c') return;
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document !== e.document) return;
+  debounceTimer = setTimeout(() => runLocalAnalysis(editor), 800);
+});
 ```
 
-::: tip Debounce 300ms
-Без debounce каждое нажатие клавиши вызывало бы parse, а это даже для tree-sitter — лишняя работа. 300ms — проверенный баланс между "ощущается живым" и "не дёргается на каждый символ".
+Отдельного `onDidSaveTextDocument` в текущей реализации нет — сохранённые файлы тоже перехватываются через текстовые изменения, если сборка сохранила буфер.
+
+::: tip Debounce 800ms
+Разумный баланс между отзывчивостью и нагрузкой на Extension Host для повторных `parser.parse()` на каждом наборе символов.
 :::
+
+
 
 ## ApiClient — auth flow
 
@@ -124,10 +136,12 @@ sequenceDiagram
 ```ts
 statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50)
 statusBarItem.command = 'analyzer.runAnalysis'
-// показывает $(beaker) Analyzer | $(pass-filled) Analyzer: user@email
+
+cacheSimulatorStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 48)
+cacheSimulatorStatusItem.command = 'analyzer.selectCacheSimulatorConfig'
 ```
 
-Кликабельный — запускает удалённый анализ.
+Вторая запись («симулятор») дублирует быстрый доступ к конфигурации кэша, см. [Overview](/clients/vscode/).
 
 ## Provider lifecycle
 

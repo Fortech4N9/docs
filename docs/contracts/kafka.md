@@ -31,7 +31,8 @@ flowchart LR
 {
   "task_id": "550e8400-e29b-41d4-a716-446655440000",
   "project_id": "11111111-2222-3333-4444-555555555555",
-  "file_s3_path": "source-codes/<project_id>/<file_id>.c"
+  "file_s3_path": "source-codes/<project_id>/<file_id>.c",
+  "cache_profile_hash": "hex-or-string"
 }
 ```
 
@@ -40,11 +41,14 @@ flowchart LR
 | `task_id` | UUID | ✓ | Уникальный ID задачи |
 | `project_id` | UUID | ✓ | Нужен воркеру для записи в `static_patterns.project_id` (ClickHouse) |
 | `file_s3_path` | string | ✓ | `<bucket>/<key>`. Воркер парсит и качает из MinIO |
+| `cache_profile_hash` | string | ✓ | Отпечаток параметров L1/L2 (формируется из формы `cache_profile_*` или дефолтов) |
 
 ::: tip Producer-специфика
 - `RequiredAcks: RequireAll` — strong durability при RF>1.
 - `Balancer: LeastBytes` — равномерное распределение по партициям.
 :::
+
+Тот же тип Go-структуры при публикации **`start_cache`** добавляет поле `cache_config_s3_path` (см. §3); для `start_static` оно сериализатором опускается (`omitempty`).
 
 ## 2. `events.analysis.static_completed`
 
@@ -87,12 +91,14 @@ flowchart LR
 {
   "task_id": "550e8400-e29b-41d4-a716-446655440000",
   "project_id": "11111111-2222-3333-4444-555555555555",
-  "file_s3_path": "source-codes/<project_id>/<file_id>.c"
+  "file_s3_path": "source-codes/<project_id>/<file_id>.c",
+  "cache_profile_hash": "hex-or-string",
+  "cache_config_s3_path": "source-codes/cache-configs/<user>/<config_id>.json"
 }
 ```
 
-::: tip Тот же payload, что и start_static
-Это сделано намеренно — воркер ничего не должен помнить про предыдущий шаг. Cache-воркер сам скачает `static-out.json` по `<task_id>` из MinIO (path-convention).
+::: tip Расширение относительно `start_static`
+Кроме полей предыдущего шага, сообщение **обязательно** содержит `cache_config_s3_path` — путь к конфигу, выбранному пользователем при `POST /analysis/upload` или `POST /analysis/files/:id/analyze`. Интерпретатор кэша пока не использует файл; воркер читает поле и пишет его в лог — коллега может подключить загрузку из MinIO перед вызовом бинарника.
 :::
 
 ## 4. `events.analysis.cache_completed`

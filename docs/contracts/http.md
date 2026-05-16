@@ -58,12 +58,27 @@
 
 | Метод | Путь | Body | Ответ |
 |---|---|---|---|
-| `POST` | `/analysis/upload` | multipart `{project_id, file}` | `202 {message, task}` |
+| `POST` | `/analysis/upload` | multipart `project_id`, `file`, **`cache_config_id` (обязательно)**, опционально параметры `cache_profile_*` | `202 {message, task}` |
+| `GET` | `/analysis/cache-configs` | — | `{configs: CacheSimulatorConfig[]}` |
+| `POST` | `/analysis/cache-configs` | multipart `file`, опционально `name` | `201 {config}` |
+| `DELETE` | `/analysis/cache-configs/:config_id` | — | `204` |
 | `GET` | `/analysis/tasks/:task_id` | — | `AnalysisTask` |
 | `GET` | `/analysis/tasks/:task_id/metrics` | — | `MetricsResponse` (из **`cache-out.json`**, см. [метрики](/backend/analysis-api/metrics)) |
 | `GET` | `/analysis/tasks/:task_id/aggregated` | — | `{ task_id, status, patterns: AggregatedEntry[] }` |
 | `GET` | `/analysis/tasks/:task_id/static-patterns` | — | `{ task_id, status, patterns }` только из **static_patterns** |
 | `GET` | `/analysis/projects/:project_id/tasks` | — | `{tasks[]}` |
+
+### Конфиги симулятора кэша (`cache_simulator_configs`)
+
+Пользователь загружает **JSON-конфиги** (расширение `.json`, валидный JSON) для будущей интеграции в cache-analysis-worker. Файлы попадают в **MinIO** (bucket `source-codes`, ключи `cache-configs/<user_id>/<uuid>.json`) и привязаны к `user_id` из JWT analysis-api.
+
+| Правило | Значение |
+|---|---|
+| Квота | не более **10** конфигов на аккаунт для роли `user`; роль **`admin`** без лимита |
+| Формат | только **`.json`**, содержимое — валидный JSON |
+| Размер | до **256 KiB** |
+
+Путь к выбранному конфигу копируется в `analysis_tasks.cache_config_s3_path` и уходит в событии **`events.analysis.start_cache`** полем `cache_config_s3_path`.
 
 ### Files (user+)
 
@@ -75,7 +90,8 @@
 |---|---|---|---|
 | `GET` | `/analysis/projects/:project_id/files` | — | `{files: ProjectFile[]}` |
 | `GET` | `/analysis/files/:file_id/content` | — | `text/plain` (исходник) |
-| `POST` | `/analysis/files/:file_id/analyze` | optional `cache_profile_*` | `202 {message, task}` |
+| `DELETE` | `/analysis/files/:file_id` | — | `204` (soft-delete — строка помечена `deleted_at`, MinIO не трогаем) |
+| `POST` | `/analysis/files/:file_id/analyze` | multipart **`cache_config_id` (обязательно)**, опционально `cache_profile_*` | `202 {message, task}` |
 
 ::: tip Дедупликация и повторный анализ
 - `POST /upload` с тем же `(project_id, filename)` и тем же содержимым **не
@@ -147,8 +163,24 @@
   "file_id": "uuid",
   "status": "pending|static_running|static_done|cache_running|done|error",
   "type": "full_analysis",
+  "cache_config_id": "uuid",
+  "cache_config_s3_path": "source-codes/cache-configs/<user>/<id>.json",
   "created_at": "...",
   "updated_at": "..."
+}
+```
+
+### `CacheSimulatorConfig`
+
+```json
+{
+  "id": "uuid",
+  "user_id": "uuid",
+  "display_name": "my-machine",
+  "original_filename": "cache.json",
+  "s3_path": "source-codes/cache-configs/<user>/<id>.json",
+  "size_bytes": 1234,
+  "created_at": "2026-05-04T00:00:00Z"
 }
 ```
 

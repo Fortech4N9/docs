@@ -6,7 +6,7 @@
 flowchart LR
     Auth[useAuthStore<br/>token, user, login, logout] --> API[axios instance]
     Project[useProjectStore<br/>projects[], list, create, delete] --> API
-    Analysis[useAnalysisStore<br/>tasks[], upload, status, metrics] --> API
+    Analysis[useAnalysisStore<br/>tasks, files, uploads, cache configs] --> API
     Admin[useAdminStore<br/>users[], projects[], stats, system] --> API
     API -->|baseURL: /api/v1| Backend
 ```
@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
 
 ::: info Мини-spec store-ов
 - **`useProjectStore`** — `projects` (`Project[]`), `fetchProjects`, `createProject(name)`, `deleteProject(id)`.
-- **`useAnalysisStore`** — `tasks`, `fetchProjectTasks`, `uploadFile`, `fetchTaskStatus`, `fetchTaskMetrics`.
+- **`useAnalysisStore`** — `tasks`, `files`, `loading`; `fetchProjectTasks`, **`fetchProjectFiles`**, **`deleteProjectFile`** (мягкое удаление строки через `DELETE /analysis/files/:id`), `uploadFile`/`analyzeExistingFile` с обязательным **`cache_config_id`**; методы конфигураций (`fetchCacheConfigs`, `uploadCacheConfig`, `deleteCacheConfig`, сохранённый последний конфиг через `persistPreferredCacheConfig`).
 - **`useAdminStore`** — `users`, `projects`, `stats`, `systemStatus`, `topPatterns` + соответствующие fetch-методы.
 :::
 
@@ -62,10 +62,11 @@ export const useAnalysisStore = defineStore('analysis', () => {
     } finally { loading.value = false }
   }
 
-  async function uploadFile(projectId: string, file: File): Promise<AnalysisTask> {
+  async function uploadFile(projectId: string, file: File, cacheConfigId: string): Promise<AnalysisTask> {
     const form = new FormData()
     form.append('project_id', projectId)
     form.append('file', file)
+    form.append('cache_config_id', cacheConfigId.trim())
     const { data } = await api.post('/analysis/upload', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
@@ -85,14 +86,28 @@ export const useAnalysisStore = defineStore('analysis', () => {
     return data
   }
 
-  return { tasks, loading, fetchProjectTasks, uploadFile, fetchTaskStatus, fetchTaskMetrics }
+  return {
+    tasks,
+    loading,
+    fetchProjectTasks,
+    fetchProjectFiles,
+    deleteProjectFile,
+    fetchCacheConfigs,
+    uploadCacheConfig,
+    deleteCacheConfig,
+    uploadFile,
+    analyzeExistingFile,
+    fetchTaskStatus,
+    fetchTaskMetrics /* + см. репо: aggregated, static patterns, simulation results */,
+  }
 })
 ```
 
 ::: tip Что здесь полезного
-- Store **владеет** массивом `tasks` и сам обновляет элемент при polling-е (`fetchTaskStatus` патчит локально).
-- `uploadFile` сразу пушит новый task в начало списка — UX мгновенный, ещё до того как 202 возвратится.
-- Нет дублирования логики между несколькими компонентами: dashboard и страница проекта оба используют один и тот же store.
+- Store держит массивы `tasks`, а при необходимости список **`files`** для песочницы; после polling `fetchTaskStatus` обновляет конкретную запись.
+- `uploadFile` / `analyzeExistingFile` обязаны прикладывать **`cache_config_id`** (см. panel `CacheSimulatorConfigToolbar`); иначе Analysis API отклонит запрос.
+- `uploadFile` пушит новый `task` наверх массива до завершения воркера — быстрый отклик UI.
+- **`deleteProjectFile`** вызывает мягкое `DELETE /analysis/files/:id`; сайдбары обновляют `fetchProjectFiles`, чтобы скрытые записи исчезли.
 :::
 
 ## Composable `useAnalysisPolling`
