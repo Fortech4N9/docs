@@ -38,7 +38,7 @@
 | `CLICKHOUSE_DB` | `analysis_metrics` | ClickHouse database |
 
 ::: warning Всё пробрасывает docker-compose
-В `diploma-infra/docker-compose.yml` сервис `analysis-api` получает корректные значения автоматически (`KAFKA_BROKERS=kafka:29092`, `CLICKHOUSE_ADDR=clickhouse:9000`, …). Локальные дефолты подходят только для запуска "go run" с локально стоящим стеком.
+В `infra/docker-compose.yml` сервис `analysis-api` получает корректные значения автоматически (`KAFKA_BROKERS=kafka:29092`, `CLICKHOUSE_ADDR=clickhouse:9000`, …). Локальные дефолты подходят только для запуска "go run" с локально стоящим стеком.
 :::
 
 ## Зависимости старта

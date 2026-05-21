@@ -97,7 +97,7 @@ worker-cache:
 
 `CacheSim.exe` — Win64 PE-бинарь, запускается через `wine`. На Apple Silicon Docker Desktop / OrbStack используют QEMU user-mode эмуляцию, и `wine` под ней нестабильно работает с этим конкретным бинарём (классический ассерт `anon_mmap_fixed` в `dlls/ntdll/unix/virtual.c`). Поэтому для cache-стадии на ARM-маках предусмотрен опциональный путь — поднять весь стек внутри Lima x86_64 VM, где ядро Linux настоящее x86_64.
 
-`diploma-infra/docker-compose.lima.yml` — override-файл, подключаемый к базовому compose только при запуске в Lima:
+`infra/docker-compose.lima.yml` — override-файл, подключаемый к базовому compose только при запуске в Lima:
 
 ```yaml
 services:
@@ -121,7 +121,7 @@ services:
     image: clickhouse/clickhouse-server:24.3
 ```
 
-Команда из `diploma-infra/Makefile`:
+Команда из `infra/Makefile`:
 
 ```sh
 make lima-up        # развернуть Ubuntu 22.04 amd64 VM с Docker внутри

@@ -12,7 +12,7 @@
 | `worker-cache-interpreter` | Go 1.22, gcc, valgrind | Запуск cachegrind, маппинг miss-ов на паттерны |
 | `diploma-frontend` | Vue 3, Vite, Pinia, Tailwind, Monaco | Веб-UI пользователя и админа |
 | `diploma-vscode` | TypeScript, web-tree-sitter | Расширение VS Code (in-editor анализ) |
-| `diploma-infra` | Docker Compose, Nginx | Сборка системы воедино, gateway |
+| `infra` | Docker Compose, Nginx, Terraform, Helm, ArgoCD | Локальный стек и production K8s |
 
 ## Слои системы
 

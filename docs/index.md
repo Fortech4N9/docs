@@ -121,7 +121,7 @@ flowchart LR
 
 ::: code-group
 ```bash [платформа и доки отдельно]
-# терминал 1 — в каталоге diploma-infra (БД, API, воркеры, gateway)
+# терминал 1 — в каталоге infra (БД, API, воркеры, gateway)
 make up                       # эквивалент docker compose up -d --build
 # UI приложения: http://localhost:8080  (NGINX_PORT из .env)
 

@@ -1,6 +1,6 @@
 # Инфраструктура
 
-`diploma-infra` — модуль, поднимающий всю платформу одной командой `docker compose up -d`. Здесь живут конфиги PostgreSQL, ClickHouse, MinIO, Kafka и nginx-gateway.
+`infra` — модуль, поднимающий всю платформу одной командой `docker compose up -d`. Здесь живут конфиги PostgreSQL, ClickHouse, MinIO, Kafka и nginx-gateway.
 
 ## Состав
 
@@ -22,7 +22,7 @@
 | worker-cache | local build (linux/amd64, ubuntu + winehq) | — | Cache simulation воркер. Запускает `CacheSim.exe` через `wine`, контейнер `linux/amd64`. |
 
 ::: info Порты задаются через `.env`
-Все host-порты вынесены в переменные `*_PORT` в `diploma-infra/.env` —
+Все host-порты вынесены в переменные `*_PORT` в `infra/.env` —
 переопределяются перед `make up`. По умолчанию они смещены, чтобы стек мог
 сосуществовать с другими docker compose проектами на той же машине.
 :::
@@ -72,7 +72,7 @@ flowchart LR
 ## Запуск
 
 ```bash
-# в каталоге diploma-infra
+# в каталоге infra
 cp .env.example .env       # один раз
 make up                    # = docker compose up -d --build
 ```

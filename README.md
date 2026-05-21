@@ -89,7 +89,7 @@ npx http-server docs/.vitepress/dist
 
 ## Запуск рядом с основной системой
 
-Платформа (`diploma-infra`) и доки поднимаются **отдельными** `docker compose`. Доки:
+Платформа (`infra`) и доки поднимаются **отдельными** `docker compose`. Доки:
 
 ```bash
 cd docs-portal && docker compose up -d docs   # http://localhost:8088
